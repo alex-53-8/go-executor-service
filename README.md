@@ -6,11 +6,26 @@ which pull items from the queue and execute lambda functions one by one.
 
 An executor service can be stopped at any time. After stopping a service all unprocessed items in a service's queue are dismissed, queue is close, and all items are being processed will finish their work, and all workers are stopped finally.
 
+## Import
+
+To use the executor service in your application add following import.
+
+```go
+import (
+	"github.com/alex-53-8/go-executor-service/executor"
+)
+```
+
 ## Usage
 
 Specifying a goroutines pool size and size of a queue
 
 ```go
+import (
+	"github.com/alex-53-8/go-executor-service/executor"
+)
+//....
+
 executor, _ := executor.CreateExecutor(executor.ExecutorConfig{PoolSize: 4, QueueSize: 100})
 
 // schedule invocation of a procedure
@@ -34,6 +49,10 @@ error = executor.Schedule(func() {})
 Here is another example: it is possible to specify a final callback which is called when all workers are done
 
 ```go
+import (
+	"github.com/alex-53-8/go-executor-service/executor"
+)
+//....
 	var onDoneWait sync.WaitGroup
 	onDoneWait.Add(1)
 
@@ -41,12 +60,12 @@ Here is another example: it is possible to specify a final callback which is cal
 	poolSize := 4
 
 	// creating an executor
-	cfg := ExecutorConfig{PoolSize: poolSize, QueueSize: queueSize, OnAllWorkersStopped: func() {
+	cfg := executor.ExecutorConfig{PoolSize: poolSize, QueueSize: queueSize, OnAllWorkersStopped: func() {
 		// called when all workers are exited
 		log.Println("on all workers are done")
 		onDoneWait.Done()
 	}}
-	executor, _ := CreateExecutor(cfg)
+	executor, _ := executor.CreateExecutor(cfg)
 
 	// scheduling all jobs here
 	for i := 0; i < queueSize; i++ {
@@ -56,13 +75,13 @@ Here is another example: it is possible to specify a final callback which is cal
 	}
 
 	// stopping an executor
-	assert.Nil(t, executor.Stop())
+	executor.Stop()
 
 	// already it is not possible to schedule - service is already stopped
 	err := executor.Schedule(func() { /* some code here, does not matter - it will be executed*/ })
-	assert.Equal(t, "Executor pool is stopped, cannot accept a job", err.Error())
+	// err variable is not nil here
 
-	//
+	// wait until all worker are done
 	onDoneWait.Wait()
 
     // continue code execution
