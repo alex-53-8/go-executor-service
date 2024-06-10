@@ -13,8 +13,11 @@ func Test_GeneralUsage(t *testing.T) {
 	var onDoneWait sync.WaitGroup
 	onDoneWait.Add(1)
 
+	queueSize := 10000
+	poolSize := 4
+
 	// creating an executor
-	cfg := ExecutorConfig{PoolSize: 4, QueueSize: 10000, OnAllWorkersStopped: func() {
+	cfg := ExecutorConfig{PoolSize: poolSize, QueueSize: queueSize, OnAllWorkersStopped: func() {
 		// called when all workers are exited
 		log.Println("on all workers are done")
 		onDoneWait.Done()
@@ -22,7 +25,7 @@ func Test_GeneralUsage(t *testing.T) {
 	executor, _ := CreateExecutor(cfg)
 
 	// scheduling all jobs here
-	for i := 0; i < 10000; i++ {
+	for i := 0; i < queueSize; i++ {
 		err := executor.Schedule(func() {
 			time.Sleep(time.Duration(100) * time.Millisecond)
 			log.Printf("I'm your lambda function %d\n", i)
@@ -30,6 +33,9 @@ func Test_GeneralUsage(t *testing.T) {
 
 		assert.Nil(t, err)
 	}
+
+	log.Println("queue size: ", executor.QueueSize())
+	assert.Equal(t, int(queueSize-poolSize), executor.QueueSize())
 
 	time.Sleep(time.Duration(50) * time.Millisecond)
 

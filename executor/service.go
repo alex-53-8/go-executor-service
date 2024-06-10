@@ -11,13 +11,14 @@ type Executor interface {
 	Schedule(fn func()) error
 	Stop() error
 	ProcessedCount() int32
+	QueueSize() int
 }
 
 // Configuration for an Executor
 // there are required field to be specified
 type ExecutorConfig struct {
-	QueueSize           uint32 `required:"true"`
-	PoolSize            uint32 `required:"true"`
+	QueueSize           int `required:"true"`
+	PoolSize            int `required:"true"`
 	OnAllWorkersStopped func()
 }
 
@@ -88,7 +89,6 @@ func worker(index int, es *executorService, workersWg *sync.WaitGroup) {
 		procedure := <-es.queue
 
 		if procedure != nil {
-			log.Println("gcr[", index, "] executing ", &procedure)
 			atomic.AddInt32((*int32)(&es.totalProcessed), 1)
 
 			// invoke a scheduled procedure obtained from a queue
@@ -144,4 +144,8 @@ func (es *executorService) Stop() error {
 
 func (es *executorService) ProcessedCount() int32 {
 	return es.totalProcessed
+}
+
+func (es *executorService) QueueSize() int {
+	return len(es.queue)
 }
