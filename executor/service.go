@@ -10,6 +10,7 @@ import (
 type Executor interface {
 	Schedule(fn func()) error
 	Stop() error
+	ProcessedCount() int32
 }
 
 // Configuration for an Executor
@@ -26,10 +27,11 @@ const stopped executorServiceStatus = 0
 const running executorServiceStatus = 1
 
 type executorService struct {
-	status        executorServiceStatus
-	queue         chan func()
-	reentrantLock sync.Mutex
-	cfg           ExecutorConfig
+	status         executorServiceStatus
+	queue          chan func()
+	reentrantLock  sync.Mutex
+	cfg            ExecutorConfig
+	totalProcessed int32
 }
 
 // Creates "Executor" instance with a specified configuration
@@ -46,7 +48,7 @@ func CreateExecutor(cfg ExecutorConfig) (Executor, error) {
 	}
 
 	var queue = make(chan func(), cfg.QueueSize)
-	es := &executorService{status: running, queue: queue, cfg: cfg}
+	es := &executorService{status: running, queue: queue, cfg: cfg, totalProcessed: 0}
 
 	go initializeWorkers(es)
 
@@ -87,6 +89,7 @@ func worker(index int, es *executorService, workersWg *sync.WaitGroup) {
 
 		if procedure != nil {
 			log.Println("gcr[", index, "] executing ", &procedure)
+			atomic.AddInt32((*int32)(&es.totalProcessed), 1)
 
 			// invoke a scheduled procedure obtained from a queue
 			procedure()
@@ -137,4 +140,8 @@ func (es *executorService) Stop() error {
 	}
 
 	return nil
+}
+
+func (es *executorService) ProcessedCount() int32 {
+	return es.totalProcessed
 }

@@ -3,7 +3,6 @@ package executor
 import (
 	"log"
 	"sync"
-	"sync/atomic"
 	"testing"
 	"time"
 
@@ -17,17 +16,15 @@ func Test_GeneralUsage(t *testing.T) {
 	// creating an executor
 	cfg := ExecutorConfig{PoolSize: 4, QueueSize: 10000, OnAllWorkersStopped: func() {
 		// called when all workers are exited
+		log.Println("on all workers are done")
 		onDoneWait.Done()
 	}}
 	executor, _ := CreateExecutor(cfg)
 
-	counter := int32(0)
-
 	// scheduling all jobs here
-	for i := 0; i < 100; i++ {
+	for i := 0; i < 10000; i++ {
 		err := executor.Schedule(func() {
 			time.Sleep(time.Duration(100) * time.Millisecond)
-			atomic.AddInt32((*int32)(&counter), 1)
 			log.Printf("I'm your lambda function %d\n", i)
 		})
 
@@ -46,8 +43,7 @@ func Test_GeneralUsage(t *testing.T) {
 	//
 	onDoneWait.Wait()
 
-	log.Println("total processed ", counter)
-	assert.Equal(t, int32(4), counter)
+	assert.Equal(t, int32(4), executor.ProcessedCount())
 
 	// a final accord - we are here only after `onDoneWait` is passed
 	assert.True(t, true)
