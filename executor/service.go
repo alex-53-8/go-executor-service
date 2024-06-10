@@ -11,7 +11,7 @@ type Executor interface {
 	Schedule(fn func()) error
 	Stop() error
 	ProcessedCount() int32
-	QueueSize() int
+	QueueLength() int
 }
 
 // Configuration for an Executor
@@ -146,6 +146,6 @@ func (es *executorService) ProcessedCount() int32 {
 	return es.totalProcessed
 }
 
-func (es *executorService) QueueSize() int {
+func (es *executorService) QueueLength() int {
 	return len(es.queue)
 }

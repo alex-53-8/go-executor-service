@@ -34,8 +34,8 @@ func Test_GeneralUsage(t *testing.T) {
 		assert.Nil(t, err)
 	}
 
-	log.Println("queue size: ", executor.QueueSize())
-	assert.Equal(t, int(queueSize-poolSize), executor.QueueSize())
+	log.Println("queue size: ", executor.QueueLength())
+	assert.Equal(t, int(queueSize-poolSize), executor.QueueLength())
 
 	time.Sleep(time.Duration(50) * time.Millisecond)
 
