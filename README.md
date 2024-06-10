@@ -1,4 +1,4 @@
-# Goroutine executor
+# GoExecutorService
 
 An executor service that helps to schedule an execution of a lambda function with `goroutine` executor pool.
 The service creates a fixed size queue for items to be processed and runs fixed number of goroutines (workers) 
