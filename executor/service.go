@@ -89,10 +89,9 @@ func worker(index int, es *executorService, workersWg *sync.WaitGroup) {
 		procedure := <-es.queue
 
 		if procedure != nil {
-			atomic.AddInt32((*int32)(&es.totalProcessed), 1)
-
 			// invoke a scheduled procedure obtained from a queue
 			procedure()
+			atomic.AddInt32((*int32)(&es.totalProcessed), 1)
 		} else {
 			log.Println("gcr[", index, "] Received nil value, terminating a worker")
 		}
