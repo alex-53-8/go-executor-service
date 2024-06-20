@@ -69,9 +69,7 @@ import (
 
 	// scheduling all jobs here
 	for i := 0; i < queueSize; i++ {
-		executor.Schedule(func() {
-			log.Printf("I'm your lambda function %d\n", i)
-		})
+		executor.Schedule(func() { /* your code here */ })
 	}
 
 	// stopping an executor
