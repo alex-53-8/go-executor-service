@@ -26,9 +26,10 @@ func Test_GeneralUsage(t *testing.T) {
 
 	// scheduling all jobs here
 	for i := 0; i < queueSize; i++ {
+		index := i
 		err := executor.Schedule(func() {
 			time.Sleep(time.Duration(100) * time.Millisecond)
-			log.Printf("I'm your lambda function %d\n", i)
+			log.Printf("I'm your lambda function %d\n", index)
 		})
 
 		assert.Nil(t, err)
