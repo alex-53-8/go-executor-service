@@ -81,7 +81,8 @@ func worker(index int, es *executorService, workersWg *sync.WaitGroup) {
 	log.Println("gcr[", index, "] ready")
 
 	for {
-		if es.status == stopped {
+		status := executorServiceStatus(atomic.LoadInt32((*int32)(&es.status)))
+		if status == stopped {
 			log.Println("gcr[", index, "] service has been stopped, terminating a worker")
 			break
 		}
