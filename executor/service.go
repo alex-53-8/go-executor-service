@@ -29,6 +29,7 @@ const running executorServiceStatus = 1
 
 type executorService struct {
 	status         executorServiceStatus
+	quit           chan int32
 	queue          chan func()
 	reentrantLock  sync.Mutex
 	cfg            ExecutorConfig
@@ -49,7 +50,7 @@ func CreateExecutor(cfg ExecutorConfig) (Executor, error) {
 	}
 
 	var queue = make(chan func(), cfg.QueueSize)
-	es := &executorService{status: running, queue: queue, cfg: cfg, totalProcessed: 0}
+	es := &executorService{status: running, queue: queue, cfg: cfg, totalProcessed: 0, quit: make(chan int32, cfg.QueueSize)}
 
 	go initializeWorkers(es)
 
@@ -71,6 +72,7 @@ func initializeWorkers(es *executorService) {
 	if es.queue != nil {
 		log.Println("closing channel")
 		close(es.queue)
+		close(es.quit)
 		es.queue = nil
 		es.cfg.OnAllWorkersStopped()
 	}
@@ -87,14 +89,14 @@ func worker(index int, es *executorService, workersWg *sync.WaitGroup) {
 			break
 		}
 
-		procedure := <-es.queue
-
-		if procedure != nil {
+		// selects randomly a channel to pick a value
+		select {
+		case procedure := <-es.queue:
 			// invoke a scheduled procedure obtained from a queue
 			procedure()
 			atomic.AddInt32((*int32)(&es.totalProcessed), 1)
-		} else {
-			log.Println("gcr[", index, "] Received nil value, terminating a worker")
+		case <-es.quit:
+			log.Println("gcr[", index, "] Quit signal received, terminating a worker")
 		}
 	}
 	log.Println("gcr[", index, "] worker exited")
@@ -131,9 +133,9 @@ func (es *executorService) Stop() error {
 	if es.status == running {
 		atomic.StoreInt32((*int32)(&es.status), int32(stopped))
 
-		// send to all workers nil reference to exit
+		//send to all workers quit signal
 		for i := 0; i < int(es.cfg.PoolSize); i++ {
-			es.queue <- nil
+			es.quit <- int32(stopped)
 		}
 	} else {
 		return errors.New("service already stopped")
